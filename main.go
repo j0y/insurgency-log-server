@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var fileWriters = make(map[string]*os.File)
+var files = make(map[string]*os.File)
 
 func main() {
 	ServerConn, _ := net.ListenUDP("udp", &net.UDPAddr{IP: []byte{192, 168, 33, 1}, Port: 10001, Zone: ""})
@@ -35,14 +35,8 @@ func write(ip string, text string) {
 		return
 	}
 
-	if _, ok := fileWriters[ip]; !ok {
-		t := time.Now().Unix()
-		timestamp := strconv.FormatInt(t, 10)
-
-		fileWriters[ip], err = os.Create(ip + "_" + timestamp + ".log")
-		if err != nil {
-			panic(err)
-		}
+	if _, ok := files[ip]; !ok {
+		createFileForNewIP(ip)
 	}
 
 	if message.GetType() == insurgencylog.LoadingMapType {
@@ -51,22 +45,38 @@ func write(ip string, text string) {
 			return
 		}
 
-		err = fileWriters[ip].Close()
-		if err != nil {
-			fmt.Print(err.Error())
-		}
-
-		eventTime := mes.Time.Unix()
-
-		fileWriters[ip], err = os.Create(ip + "_" + strconv.FormatInt(eventTime, 10) + "_" + mes.Map + ".log")
-		if err != nil {
-			fileWriters[ip].Close()
-			panic(err)
-		}
+		startNewFile(mes, ip)
 	}
 
-	_, err = fileWriters[ip].WriteString(text + "\n")
+	_, err = files[ip].WriteString(text + "\n")
 	if err != nil {
 		fmt.Print(err.Error())
+	}
+}
+
+func createFileForNewIP(ip string) {
+	var err error
+
+	t := time.Now().Unix()
+	timestamp := strconv.FormatInt(t, 10)
+
+	files[ip], err = os.Create(ip + "_" + timestamp + ".log")
+	if err != nil {
+		panic(err)
+	}
+}
+
+func startNewFile(event insurgencylog.LoadingMap, ip string) {
+	err := files[ip].Close()
+	if err != nil {
+		fmt.Print(err.Error())
+	}
+
+	eventTime := event.Time.Unix()
+
+	files[ip], err = os.Create(ip + "_" + strconv.FormatInt(eventTime, 10) + "_" + event.Map + ".log")
+	if err != nil {
+		files[ip].Close()
+		panic(err)
 	}
 }
