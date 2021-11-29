@@ -1,8 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	insurgencylog "my/insurgency-log"
+	insurgencylog "my.com/insurgency-log"
 	"net"
 	"os"
 	"strconv"
@@ -22,26 +23,29 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer f.Close()
+
+	datawriter := bufio.NewWriter(f)
 
 	for {
 		n, addr, _ := ServerConn.ReadFromUDP(buf)
+		text := string(buf[5:n])
 
-		_, err = f.Write(buf[5:n])
+		message, err := insurgencylog.Parse(text)
 		if err != nil {
-			fmt.Print(err.Error())
-		}
-		message, err := insurgencylog.Parse(string(buf[5:n]))
-		if err != nil {
-			fmt.Print(err.Error())
+			fmt.Print(err.Error() + ": " + text)
+			continue
 		}
 
 		if message.GetType() == insurgencylog.LoadingMapType {
-			mes, ok := message.(*insurgencylog.LoadingMap)
+			mes, ok := message.(insurgencylog.LoadingMap)
 			if !ok {
 				continue
 			}
 
+			err := datawriter.Flush()
+			if err != nil {
+				fmt.Print(err.Error())
+			}
 			err = f.Close()
 			if err != nil {
 				fmt.Print(err.Error())
@@ -50,8 +54,17 @@ func main() {
 			eventTime := mes.Time.Unix()
 			f, err = os.Create(addr.IP.String() + "_" + strconv.FormatInt(eventTime, 10) + "_" + mes.Map + ".log")
 			if err != nil {
+				datawriter.Flush()
+				f.Close()
 				panic(err)
 			}
+
+			datawriter = bufio.NewWriter(f)
+		}
+
+		_, err = datawriter.WriteString(text + "\n")
+		if err != nil {
+			fmt.Print(err.Error())
 		}
 	}
 }
