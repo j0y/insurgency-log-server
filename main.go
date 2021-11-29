@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	insurgencylog "my/insurgency-log"
 	"net"
 	"os"
 	"strconv"
@@ -24,12 +25,33 @@ func main() {
 	defer f.Close()
 
 	for {
-		n, _, _ := ServerConn.ReadFromUDP(buf)
+		n, addr, _ := ServerConn.ReadFromUDP(buf)
 
 		_, err = f.Write(buf[5:n])
 		if err != nil {
-			fmt.Print(err)
+			fmt.Print(err.Error())
 		}
-		//if buf == loading map { create new file }
+		message, err := insurgencylog.Parse(string(buf[5:n]))
+		if err != nil {
+			fmt.Print(err.Error())
+		}
+
+		if message.GetType() == insurgencylog.LoadingMapType {
+			mes, ok := message.(*insurgencylog.LoadingMap)
+			if !ok {
+				continue
+			}
+
+			err = f.Close()
+			if err != nil {
+				fmt.Print(err.Error())
+			}
+
+			eventTime := mes.Time.Unix()
+			f, err = os.Create(addr.IP.String() + "_" + strconv.FormatInt(eventTime, 10) + "_" + mes.Map + ".log")
+			if err != nil {
+				panic(err)
+			}
+		}
 	}
 }
