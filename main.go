@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var files = make(map[string]*os.File)
+var files = make(map[string]*os.File, 0)
 
 func main() {
 	ServerConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: []byte{0, 0, 0, 0}, Port: 16842, Zone: ""})
@@ -26,7 +26,7 @@ func main() {
 		if n < 6 {
 			continue
 		}
-		text := string(buf[5:n])
+		text := string(buf[5 : n-1])
 
 		write(addr.IP.String(), text)
 	}
