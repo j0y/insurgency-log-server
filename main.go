@@ -5,6 +5,7 @@ import (
 	insurgencylog "my.com/insurgency-log"
 	"net"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 )
@@ -60,7 +61,13 @@ func createFileForNewIP(ip string) {
 	t := time.Now().Unix()
 	timestamp := strconv.FormatInt(t, 10)
 
-	files[ip], err = os.Create(ip + "_" + timestamp + ".log")
+	newDir := filepath.Join(".", time.Now().Format("2006-01-02"))
+	err = os.MkdirAll(newDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
+	files[ip], err = os.Create(newDir + "/" + ip + "_" + timestamp + ".log")
 	if err != nil {
 		panic(err)
 	}
@@ -78,7 +85,13 @@ func startNewFile(event insurgencylog.LoadingMap, ip string) {
 
 	eventTime := event.Time.Unix()
 
-	files[ip], err = os.Create(ip + "_" + strconv.FormatInt(eventTime, 10) + "_" + event.Map + ".log")
+	newDir := filepath.Join(".", time.Now().Format("2006-01-02"))
+	err = os.MkdirAll(newDir, os.ModePerm)
+	if err != nil {
+		panic(err)
+	}
+
+	files[ip], err = os.Create(newDir + "/" + ip + "_" + strconv.FormatInt(eventTime, 10) + "_" + event.Map + ".log")
 	if err != nil {
 		files[ip].Close()
 		panic(err)
