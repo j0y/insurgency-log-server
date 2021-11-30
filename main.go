@@ -13,7 +13,10 @@ import (
 var files = make(map[string]*os.File)
 
 func main() {
-	ServerConn, _ := net.ListenUDP("udp", &net.UDPAddr{IP: []byte{192, 168, 33, 1}, Port: 10001, Zone: ""})
+	ServerConn, err := net.ListenUDP("udp", &net.UDPAddr{IP: []byte{0, 0, 0, 0}, Port: 16842, Zone: ""})
+	if err != nil {
+		panic(err)
+	}
 	defer ServerConn.Close()
 
 	buf := make([]byte, 1024)
@@ -49,7 +52,7 @@ func write(ip string, text string) {
 		}
 	}
 
-	_, err = files[ip].WriteString(text + "\n")
+	_, err = files[ip].WriteString(text)
 	if err != nil {
 		fmt.Print(err.Error())
 	}
