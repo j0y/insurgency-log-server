@@ -35,10 +35,6 @@ func write(ip string, text string) {
 		return
 	}
 
-	if _, ok := files[ip]; !ok {
-		createFileForNewIP(ip)
-	}
-
 	if message.GetType() == insurgencylog.LoadingMapType {
 		mes, ok := message.(insurgencylog.LoadingMap)
 		if !ok {
@@ -46,6 +42,10 @@ func write(ip string, text string) {
 		}
 
 		startNewFile(mes, ip)
+	} else {
+		if _, ok := files[ip]; !ok {
+			createFileForNewIP(ip)
+		}
 	}
 
 	_, err = files[ip].WriteString(text + "\n")
@@ -67,9 +67,13 @@ func createFileForNewIP(ip string) {
 }
 
 func startNewFile(event insurgencylog.LoadingMap, ip string) {
-	err := files[ip].Close()
-	if err != nil {
-		fmt.Print(err.Error())
+	var err error
+
+	if _, ok := files[ip]; ok {
+		err = files[ip].Close()
+		if err != nil {
+			fmt.Print(err.Error())
+		}
 	}
 
 	eventTime := event.Time.Unix()
