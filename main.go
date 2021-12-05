@@ -46,6 +46,20 @@ func write(ip string, text string) {
 		}
 
 		startNewFile(mes, ip)
+	} else if message.GetType() == insurgencylog.ServerMessageType {
+		mes, ok := message.(insurgencylog.ServerMessage)
+		if !ok {
+			return
+		} else if mes.Text == "quit" {
+			event := insurgencylog.LoadingMap{
+				Meta: insurgencylog.Meta{
+					Time: mes.Time,
+					Type: insurgencylog.LoadingMapType,
+				},
+				Map: "ministry_coop",
+			}
+			startNewFile(event, ip)
+		}
 	} else {
 		if _, ok := files[ip]; !ok {
 			createFileForNewIP(ip)
