@@ -59,6 +59,7 @@ func write(ip string, text string) {
 				Map: "ministry_coop",
 			}
 			startNewFile(event, ip)
+			text = text[:24] + "Loading map \"ministry_coop\""
 		}
 	} else {
 		if _, ok := files[ip]; !ok {
