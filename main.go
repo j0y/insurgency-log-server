@@ -2,7 +2,7 @@ package main
 
 import (
 	"fmt"
-	insurgencylog "my.com/insurgency-log"
+	insurgencylog "github.com/j0y/insurgency-log"
 	"net"
 	"os"
 	"path/filepath"
